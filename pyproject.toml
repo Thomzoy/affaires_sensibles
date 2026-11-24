@@ -1,7 +1,7 @@
 [project]
 name = "affaires"
 version = "0.1.0"
-description = "Add your description here"
+description = "Scraper and static site for the episodes of the France Inter podcast Affaires sensibles"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
