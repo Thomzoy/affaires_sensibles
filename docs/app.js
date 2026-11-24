@@ -274,7 +274,36 @@ function renderEpisode(id) {
         ${e.url ? `<a class="web-link" href="${e.url}" target="_blank" rel="noopener">Voir sur Radio France</a>` : ""}
       </p>
     </article>`;
+
+  const audio = app.querySelector("audio");
+  // iOS Safari clips its native audio player, so Plyr draws the controls instead
+  if (audio && window.Plyr) player = new Plyr(audio, PLAYER_OPTIONS);
 }
+
+let player;
+
+const PLAYER_OPTIONS = {
+  controls: ["play", "progress", "current-time", "duration", "mute", "settings"],
+  settings: ["speed"],
+  speed: { selected: 1, options: [0.75, 1, 1.25, 1.5, 1.75, 2] },
+  iconUrl: "https://cdn.jsdelivr.net/npm/plyr@3.8.5/dist/plyr.svg",
+  i18n: {
+    play: "Lecture",
+    pause: "Pause",
+    seek: "Avancer",
+    played: "Écouté",
+    buffered: "Chargé",
+    currentTime: "Position",
+    duration: "Durée",
+    volume: "Volume",
+    mute: "Couper le son",
+    unmute: "Rétablir le son",
+    settings: "Réglages",
+    menuBack: "Retour",
+    speed: "Vitesse",
+    normal: "Normale",
+  },
+};
 
 function renderSearch(query) {
   const terms = normalize(query).split(/\s+/).filter(Boolean);
@@ -294,6 +323,8 @@ function route() {
   const hash = decodeURIComponent(path) || "/";
   const [, view, arg] = hash.split("/");
   if (view !== "recherche") searchInput.value = "";
+  player?.destroy();
+  player = null;
   if (!view) renderSeriesList();
   else if (view === "serie") renderSerie(arg);
   else if (view === "episode") renderEpisode(arg);

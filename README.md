@@ -97,7 +97,8 @@ broadcast, and writes a compact `docs/episodes.json` (~2 MB) with the fields the
 
 ### Static site (`docs/`)
 
-Plain HTML/CSS/JavaScript, no build step and no dependencies. `app.js` loads `episodes.json` once and
+Plain HTML/CSS/JavaScript, no build step. The only dependency is [Plyr](https://plyr.io), loaded from
+jsDelivr, which draws the audio player (iOS Safari's native player gets clipped). `app.js` loads `episodes.json` once and
 does everything client-side:
 
 - **Routing** uses the URL hash, so the back button and shared links work:
