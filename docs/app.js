@@ -20,6 +20,10 @@ const plural = (n, singular, pluralForm = `${singular}s`) => `${n} ${n > 1 ? plu
 
 const thumb = (src, preset = "200x200") => (src ? `${src}/${preset}` : "");
 
+// Same deep link as the "Ouvrir dans l'App" button on radiofrance.fr (iOS and Android apps)
+const isMobile = /android|iPad|iPhone|iPod/i.test(navigator.userAgent);
+const appUrl = (id) => `radiofrance://radiofrance.fr/layout?id=${encodeURIComponent(id)}`;
+
 function buildSeries() {
   const map = new Map();
   for (const e of episodes) {
@@ -234,7 +238,10 @@ function renderEpisode(id) {
           : ""
       }
       ${e.audio ? `<audio controls preload="none" src="${e.audio}"></audio>` : ""}
-      <p>${e.url ? `<a href="${e.url}" target="_blank" rel="noopener">Voir sur Radio France</a>` : ""}</p>
+      <p class="links">
+        ${isMobile ? `<a class="app-link" href="${appUrl(e.id)}" data-fallback="${e.url || ""}">Ouvrir dans l’application Radio France</a>` : ""}
+        ${e.url ? `<a href="${e.url}" target="_blank" rel="noopener">Voir sur Radio France</a>` : ""}
+      </p>
     </article>`;
 }
 
@@ -284,6 +291,18 @@ document.getElementById("random").addEventListener("click", () => {
 });
 
 window.addEventListener("hashchange", route);
+
+// If the app isn't installed the page stays visible, so open the web page instead
+let appFallbackTimer;
+document.addEventListener("click", (event) => {
+  const link = event.target.closest(".app-link");
+  if (!link?.dataset.fallback) return;
+  clearTimeout(appFallbackTimer);
+  appFallbackTimer = setTimeout(() => (location.href = link.dataset.fallback), 2500);
+});
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") clearTimeout(appFallbackTimer);
+});
 
 document.addEventListener("click", (event) => {
   const picker = document.getElementById("theme-picker");
