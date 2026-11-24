@@ -1,0 +1,64 @@
+name: Publier le site
+
+on:
+  schedule:
+    - cron: "0 5 * * *"
+  workflow_dispatch:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10
+
+      # Overwrites the committed data/details_cache.jsonl only when an Actions cache exists,
+      # so the first run starts from the committed file instead of fetching every episode
+      - name: Restore episode details cache
+        uses: actions/cache/restore@v6
+        with:
+          path: data/details_cache.jsonl
+          key: details-${{ github.run_id }}
+          restore-keys: details-
+
+      - name: Fetch episodes
+        run: uv run main.py --details
+
+      - name: Save episode details cache
+        if: always()
+        uses: actions/cache/save@v6
+        with:
+          path: data/details_cache.jsonl
+          key: details-${{ github.run_id }}
+
+      - name: Build site data
+        run: uv run build_site.py
+
+      - uses: actions/configure-pages@v6
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: docs
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
