@@ -81,10 +81,42 @@ function renderSerie(id) {
     <div class="list">${s.episodes.map(episodeCard).join("")}</div>`;
 }
 
+const CARDS_PER_BATCH = 50;
+let cardsObserver;
+
+// Rendering thousands of cards at once freezes the page, so cards are appended in
+// batches as a sentinel element at the bottom of the list scrolls into view
+function renderCards(container, list) {
+  cardsObserver?.disconnect();
+  if (!list.length) {
+    container.innerHTML = `<p class="muted">Aucun épisode trouvé.</p>`;
+    return;
+  }
+  container.innerHTML = "";
+  const sentinel = document.createElement("div");
+  let shown = 0;
+  const appendBatch = () => {
+    sentinel.remove();
+    container.insertAdjacentHTML("beforeend", list.slice(shown, shown + CARDS_PER_BATCH).map(episodeCard).join(""));
+    shown += CARDS_PER_BATCH;
+    if (shown < list.length) {
+      container.append(sentinel);
+      // Re-observing forces a fresh check in case the sentinel is still in view
+      observer.unobserve(sentinel);
+      observer.observe(sentinel);
+    }
+  };
+  const observer = (cardsObserver = new IntersectionObserver((entries) => entries[0].isIntersecting && appendBatch(), {
+    rootMargin: "1500px",
+  }));
+  appendBatch();
+}
+
 function renderEpisodeList(list, heading) {
   app.innerHTML = `
     <h2>${heading}</h2>
-    <div class="list">${list.map(episodeCard).join("") || `<p class="muted">Aucun épisode trouvé.</p>`}</div>`;
+    <div class="list"></div>`;
+  renderCards(app.querySelector(".list"), list);
 }
 
 let shuffleRank = new Map();
@@ -186,8 +218,7 @@ function renderAllEpisodes(params) {
     else list.sort((a, b) => (sort === "asc" ? 1 : -1) * (a.date || "").localeCompare(b.date || ""));
 
     document.getElementById("count").textContent = plural(list.length, "épisode");
-    document.getElementById("episode-list").innerHTML =
-      list.map(episodeCard).join("") || `<p class="muted">Aucun épisode trouvé.</p>`;
+    renderCards(document.getElementById("episode-list"), list);
 
     const query = new URLSearchParams();
     for (const t of selected) query.append("theme", t);
