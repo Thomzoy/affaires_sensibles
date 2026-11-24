@@ -271,7 +271,7 @@ function renderEpisode(id) {
       ${e.audio ? `<audio controls preload="none" src="${e.audio}"></audio>` : ""}
       <p class="links">
         ${isMobile ? `<a class="app-link" href="${appUrl(e.id)}" data-fallback="${e.url || ""}">Ouvrir dans l’application Radio France</a>` : ""}
-        ${e.url ? `<a href="${e.url}" target="_blank" rel="noopener">Voir sur Radio France</a>` : ""}
+        ${e.url ? `<a class="web-link" href="${e.url}" target="_blank" rel="noopener">Voir sur Radio France</a>` : ""}
       </p>
     </article>`;
 }
